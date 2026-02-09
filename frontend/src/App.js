@@ -161,7 +161,7 @@ function MainDashboard({ role, setRole }) {
 
   /* Load Users for Admin */
   function loadUsers() {
-    fetch("http://localhost:8000/api/users")
+    fetch("https://water-quality-management.onrender.com")
       .then((res) => res.json())
       .then(setUsersList);
   }
@@ -174,7 +174,7 @@ function MainDashboard({ role, setRole }) {
 
   /* Add User */
   function addUser() {
-    fetch("http://localhost:8000/api/users/add", {
+    fetch("https://water-quality-management.onrender.com/add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -192,7 +192,7 @@ function MainDashboard({ role, setRole }) {
 
   /* Delete User */
   function deleteUser(username) {
-    fetch("http://localhost:8000/api/users/delete", {
+    fetch("https://water-quality-management.onrender.com/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username }),
