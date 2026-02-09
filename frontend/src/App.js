@@ -134,7 +134,7 @@ function MainDashboard({ role, setRole }) {
   /* Fetch Live Data */
   useEffect(() => {
     const interval = setInterval(() => {
-      fetch("http://localhost:8000/api/water/latest")
+      fetch("https://water-quality-management.onrender.com/api/water/latest")
         .then((res) => res.json())
         .then((result) => {
           setData(result);
