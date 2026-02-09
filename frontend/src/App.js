@@ -151,7 +151,7 @@ function MainDashboard({ role, setRole }) {
           });
         });
 
-      fetch("http://localhost:8000/api/water/alerts")
+      fetch("https://water-quality-management.onrender.com")
         .then((res) => res.json())
         .then((msg) => setAlertMsg(msg.alert));
     }, 2000);
@@ -235,7 +235,7 @@ function MainDashboard({ role, setRole }) {
             <ListItem
               button
               component="a"
-              href="http://localhost:8000/api/report/full"
+              href="https://water-quality-management.onrender.com"
               target="_blank"
             >
               <ListItemIcon>

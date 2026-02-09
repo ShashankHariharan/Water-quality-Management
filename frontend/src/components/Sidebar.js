@@ -19,7 +19,7 @@ export default function Sidebar({ role }) {
         <ListItem
           button
           component="a"
-          href="http://localhost:8000/api/report/full"
+          href="https://water-quality-management.onrender.com"
           target="_blank"
         >
           <ListItemText primary="Download Report" />
