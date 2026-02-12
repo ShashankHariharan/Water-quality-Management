@@ -7,7 +7,7 @@ export default function Dashboard({ role }) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      fetch("https://water-quality-management.onrender.com/api/water/latest")
+      fetch("http://127.0.0.1:8000/api/water/latest")
         .then((res) => res.json())
         .then(setData);
     }, 2000);

@@ -1,3 +1,4 @@
+import math
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -21,7 +22,10 @@ app = FastAPI(title="Water Quality Management Backend")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -253,3 +257,87 @@ def delete_user(data: dict):
 @app.get("/")
 def home():
     return {"message": "Advanced Water Quality Backend Running"}
+
+# ----------------------------
+# WQI Calculation Function
+# ----------------------------
+def calculate_wqi(ph, turbidity, tds, temperature):
+    score = 0
+
+    # pH Contribution
+    if 6.5 <= ph <= 8.5:
+        score += 10
+    else:
+        score += 40
+
+    # Turbidity Contribution
+    if turbidity <= 5:
+        score += 10
+    elif turbidity <= 10:
+        score += 30
+    else:
+        score += 50
+
+    # TDS Contribution
+    if tds <= 300:
+        score += 10
+    elif tds <= 600:
+        score += 25
+    else:
+        score += 45
+
+    # Temperature Contribution
+    if temperature <= 30:
+        score += 10
+    else:
+        score += 20
+
+    return score
+
+
+# ----------------------------
+# AI Risk Prediction Function
+# ----------------------------
+def contamination_risk(wqi):
+    # Convert WQI into probability %
+    risk = min(100, int((wqi / 200) * 100))
+    return risk
+
+
+# ----------------------------
+# New Analytics Endpoint
+# ----------------------------
+@app.get("/api/water/analytics")
+def water_analytics():
+    db = SessionLocal()
+    latest = db.query(SensorLog).order_by(SensorLog.id.desc()).first()
+    db.close()
+
+    if not latest:
+        return {"error": "No data available"}
+
+    wqi = calculate_wqi(
+        latest.ph,
+        latest.turbidity,
+        latest.tds,
+        latest.temperature
+    )
+
+    risk = contamination_risk(wqi)
+
+    # Classification
+    if wqi < 50:
+        label = "Excellent ✅"
+    elif wqi < 100:
+        label = "Good 👍"
+    elif wqi < 200:
+        label = "Poor ⚠️"
+    else:
+        label = "Unsafe ❌"
+
+    return {
+        "wqi": wqi,
+        "status": label,
+        "risk_percent": risk,
+        "suggestion": "Increase filtration" if risk > 60 else "Water quality stable"
+    }

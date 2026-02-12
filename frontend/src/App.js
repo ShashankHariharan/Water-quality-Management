@@ -16,15 +16,27 @@ import {
   ListItemText,
   Divider,
   Alert,
+  Switch,
 } from "@mui/material";
 
+import { motion, AnimatePresence } from "framer-motion";
+
+/* Icons */
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import DevicesIcon from "@mui/icons-material/Devices";
+import InsightsIcon from "@mui/icons-material/Insights";
+import HistoryIcon from "@mui/icons-material/History";
+import BuildIcon from "@mui/icons-material/Build";
 import PeopleIcon from "@mui/icons-material/People";
-import DownloadIcon from "@mui/icons-material/Download";
+import SettingsIcon from "@mui/icons-material/Settings";
+import DescriptionIcon from "@mui/icons-material/Description";
+import InfoIcon from "@mui/icons-material/Info";
 import LogoutIcon from "@mui/icons-material/Logout";
+
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 
+/* Charts */
 import {
   LineChart,
   Line,
@@ -34,10 +46,11 @@ import {
   CartesianGrid,
 } from "recharts";
 
+const API_BASE = "http://127.0.0.1:8000";
+
 /* =========================
    MAIN APP
 ========================= */
-
 export default function App() {
   const [role, setRole] = useState(null);
 
@@ -51,65 +64,62 @@ export default function App() {
 /* =========================
    LOGIN PAGE
 ========================= */
-
 function Login({ setRole }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   function handleLogin() {
-    if (username === "admin" && password === "admin123") {
-      setRole("Admin");
-    } else if (username === "operator" && password === "operator123") {
+    if (username === "admin" && password === "admin123") setRole("Admin");
+    else if (username === "operator" && password === "operator123")
       setRole("Operator");
-    } else {
-      alert("Invalid Login Credentials");
-    }
+    else alert("Invalid Login Credentials");
   }
 
   return (
     <Box
       sx={{
         height: "100vh",
+        background: "radial-gradient(circle, #2563eb, #111827)",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background: "linear-gradient(to right, #2563eb, #111827)",
       }}
     >
-      <Card sx={{ width: 380, p: 3, borderRadius: 4 }}>
-        <Typography variant="h4" textAlign="center" fontWeight="bold">
-          Water Quality
-        </Typography>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <Card sx={{ width: 420, p: 4, borderRadius: 4 }}>
+          <Typography variant="h4" fontWeight="bold" textAlign="center">
+            Water Quality Monitoring
+          </Typography>
 
-        <Typography variant="subtitle1" textAlign="center" sx={{ mb: 3 }}>
-          Management System Login
-        </Typography>
+          <Typography textAlign="center" sx={{ mb: 3, color: "gray" }}>
+            Secure Management Login
+          </Typography>
 
-        <TextField
-          fullWidth
-          label="Username"
-          margin="normal"
-          onChange={(e) => setUsername(e.target.value)}
-        />
+          <TextField
+            fullWidth
+            label="Username"
+            margin="normal"
+            onChange={(e) => setUsername(e.target.value)}
+          />
 
-        <TextField
-          fullWidth
-          label="Password"
-          type="password"
-          margin="normal"
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <TextField
+            fullWidth
+            label="Password"
+            type="password"
+            margin="normal"
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-        <Button
-          fullWidth
-          variant="contained"
-          size="large"
-          sx={{ mt: 2, borderRadius: 3 }}
-          onClick={handleLogin}
-        >
-          Login
-        </Button>
-      </Card>
+          <Button
+            fullWidth
+            variant="contained"
+            sx={{ mt: 2 }}
+            onClick={handleLogin}
+          >
+            Login
+          </Button>
+        </Card>
+      </motion.div>
     </Box>
   );
 }
@@ -117,41 +127,37 @@ function Login({ setRole }) {
 /* =========================
    MAIN DASHBOARD
 ========================= */
-
 function MainDashboard({ role, setRole }) {
+  const [page, setPage] = useState("dashboard");
+
+  /* Dark Mode */
+  const [darkMode, setDarkMode] = useState(false);
+
+  /* Sensor Data */
   const [data, setData] = useState(null);
   const [history, setHistory] = useState([]);
-  const [alertMsg, setAlertMsg] = useState("Loading Alerts...");
+  const [alertMsg, setAlertMsg] = useState("Loading alerts...");
 
-  // Admin user management
+  /* Admin Users */
   const [usersList, setUsersList] = useState([]);
   const [newUser, setNewUser] = useState("");
   const [newPass, setNewPass] = useState("");
 
-  // Page Navigation (Dashboard / Admin)
-  const [page, setPage] = useState("dashboard");
-
-  /* Fetch Live Data */
+  /* Fetch Sensor Data */
   useEffect(() => {
     const interval = setInterval(() => {
-      fetch("https://water-quality-management.onrender.com/api/water/latest")
+      fetch(`${API_BASE}/api/water/latest`)
         .then((res) => res.json())
         .then((result) => {
           setData(result);
 
-          setHistory((prev) => {
-            const updated = [
-              ...prev,
-              {
-                time: new Date().toLocaleTimeString(),
-                ph: result.ph,
-              },
-            ];
-            return updated.slice(-10);
-          });
+          setHistory((prev) =>
+            [...prev, { time: new Date().toLocaleTimeString(), ph: result.ph }]
+              .slice(-10)
+          );
         });
 
-      fetch("https://water-quality-management.onrender.com")
+      fetch(`${API_BASE}/api/water/alerts`)
         .then((res) => res.json())
         .then((msg) => setAlertMsg(msg.alert));
     }, 2000);
@@ -159,22 +165,20 @@ function MainDashboard({ role, setRole }) {
     return () => clearInterval(interval);
   }, []);
 
-  /* Load Users for Admin */
+  /* Load Users */
   function loadUsers() {
-    fetch("https://water-quality-management.onrender.com")
+    fetch(`${API_BASE}/api/users`)
       .then((res) => res.json())
       .then(setUsersList);
   }
 
   useEffect(() => {
-    if (role === "Admin") {
-      loadUsers();
-    }
+    if (role === "Admin") loadUsers();
   }, [role]);
 
   /* Add User */
   function addUser() {
-    fetch("https://water-quality-management.onrender.com/add", {
+    fetch(`${API_BASE}/api/users/add`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -183,200 +187,324 @@ function MainDashboard({ role, setRole }) {
         role: "Operator",
       }),
     }).then(() => {
-      alert("User Added Successfully!");
+      loadUsers();
       setNewUser("");
       setNewPass("");
-      loadUsers();
     });
   }
 
   /* Delete User */
   function deleteUser(username) {
-    fetch("https://water-quality-management.onrender.com/delete", {
+    fetch(`${API_BASE}/api/users/delete`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username }),
-    }).then(() => {
-      alert("User Deleted Successfully!");
-      loadUsers();
-    });
+    }).then(() => loadUsers());
   }
 
   if (!data) return <Typography>Loading Dashboard...</Typography>;
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box
+      sx={{
+        display: "flex",
+        minHeight: "100vh",
+        background: darkMode ? "#111827" : "#f9fafb",
+        color: darkMode ? "white" : "black",
+      }}
+    >
       {/* Sidebar */}
-      <Drawer variant="permanent" sx={{ width: 240 }}>
+      <Drawer variant="permanent" sx={{ width: 260 }}>
         <Toolbar />
-        <Box sx={{ overflow: "auto" }}>
-          <List>
-            {/* Dashboard Button */}
-            <ListItem button onClick={() => setPage("dashboard")}>
-              <ListItemIcon>
-                <DashboardIcon />
-              </ListItemIcon>
-              <ListItemText primary="Dashboard" />
-            </ListItem>
+        <List>
+          <SidebarItem
+            icon={<DashboardIcon />}
+            text="Dashboard"
+            active={page === "dashboard"}
+            onClick={() => setPage("dashboard")}
+          />
+          <SidebarItem
+            icon={<DevicesIcon />}
+            text="Devices"
+            active={page === "devices"}
+            onClick={() => setPage("devices")}
+          />
+          <SidebarItem
+            icon={<InsightsIcon />}
+            text="Analytics"
+            active={page === "analytics"}
+            onClick={() => setPage("analytics")}
+          />
+          <SidebarItem
+            icon={<HistoryIcon />}
+            text="Sensor Logs"
+            active={page === "logs"}
+            onClick={() => setPage("logs")}
+          />
+          <SidebarItem
+            icon={<BuildIcon />}
+            text="Maintenance"
+            active={page === "maintenance"}
+            onClick={() => setPage("maintenance")}
+          />
 
-            {/* Admin Button */}
-            {role === "Admin" && (
-              <ListItem button onClick={() => setPage("admin")}>
-                <ListItemIcon>
-                  <PeopleIcon />
-                </ListItemIcon>
-                <ListItemText primary="User Management" />
-              </ListItem>
-            )}
+          {role === "Admin" && (
+            <SidebarItem
+              icon={<PeopleIcon />}
+              text="User Management"
+              active={page === "admin"}
+              onClick={() => setPage("admin")}
+            />
+          )}
 
-            <Divider />
+          <SidebarItem
+            icon={<SettingsIcon />}
+            text="Settings"
+            active={page === "settings"}
+            onClick={() => setPage("settings")}
+          />
+          <SidebarItem
+            icon={<DescriptionIcon />}
+            text="Reports"
+            active={page === "reports"}
+            onClick={() => setPage("reports")}
+          />
+          <SidebarItem
+            icon={<InfoIcon />}
+            text="System Info"
+            active={page === "info"}
+            onClick={() => setPage("info")}
+          />
 
-            {/* Report */}
-            <ListItem
-              button
-              component="a"
-              href="https://water-quality-management.onrender.com"
-              target="_blank"
-            >
-              <ListItemIcon>
-                <DownloadIcon />
-              </ListItemIcon>
-              <ListItemText primary="Download Report" />
-            </ListItem>
+          <Divider />
 
-            {/* Logout */}
-            <ListItem button onClick={() => setRole(null)}>
-              <ListItemIcon>
-                <LogoutIcon />
-              </ListItemIcon>
-              <ListItemText primary="Logout" />
-            </ListItem>
-          </List>
-        </Box>
+          <SidebarItem
+            icon={<LogoutIcon />}
+            text="Logout"
+            onClick={() => setRole(null)}
+          />
+        </List>
       </Drawer>
 
       {/* Main Content */}
       <Box sx={{ flexGrow: 1 }}>
-        {/* Top Bar */}
         <AppBar position="static">
           <Toolbar>
             <Typography variant="h6" sx={{ flexGrow: 1 }}>
-              Water Quality Dashboard ({role})
+              Water Quality Monitoring ({role})
             </Typography>
+
+            {/* Dark Mode Toggle */}
+            <Typography variant="body2" sx={{ mr: 1 }}>
+              Dark Mode
+            </Typography>
+            <Switch
+              checked={darkMode}
+              onChange={() => setDarkMode(!darkMode)}
+            />
           </Toolbar>
         </AppBar>
 
         <Box sx={{ p: 3 }}>
-          {/* Alerts */}
           <Alert severity="info" sx={{ mb: 3 }}>
             {alertMsg}
           </Alert>
 
-          {/* ================= DASHBOARD PAGE ================= */}
-          {page === "dashboard" && (
-            <>
-              {/* KPI Cards */}
-              <Grid container spacing={3}>
-                <KpiCard title="pH Level" value={data.ph} />
-                <KpiCard title="Turbidity" value={data.turbidity} />
-                <KpiCard title="TDS (ppm)" value={data.tds} />
-                <KpiCard title="Temperature" value={data.temperature} />
-              </Grid>
+          {/* PAGE CONTENT */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={page}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              {/* DASHBOARD */}
+              {page === "dashboard" && (
+                <>
+                  <Grid container spacing={3}>
+                    <KpiCard title="pH Level" value={data.ph} />
+                    <KpiCard title="Turbidity" value={data.turbidity} />
+                    <KpiCard title="TDS (ppm)" value={data.tds} />
+                    <KpiCard title="Temperature (°C)" value={data.temperature} />
+                  </Grid>
 
-              {/* Chart */}
-              <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>
-                Live pH Trend
-              </Typography>
-
-              <Card sx={{ p: 2, borderRadius: 4 }}>
-                <LineChart width={750} height={280} data={history}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="time" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="ph" strokeWidth={3} />
-                </LineChart>
-              </Card>
-            </>
-          )}
-
-          {/* ================= ADMIN PAGE ================= */}
-          {page === "admin" && role === "Admin" && (
-            <Card sx={{ mt: 3, p: 3, borderRadius: 4 }}>
-              <Typography variant="h5" sx={{ mb: 2 }}>
-                Admin User Management
-              </Typography>
-
-              {/* Add User Form */}
-              <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-                <TextField
-                  label="New Username"
-                  value={newUser}
-                  onChange={(e) => setNewUser(e.target.value)}
-                />
-
-                <TextField
-                  label="Password"
-                  type="password"
-                  value={newPass}
-                  onChange={(e) => setNewPass(e.target.value)}
-                />
-
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={addUser}
-                >
-                  Add User
-                </Button>
-              </Box>
-
-              {/* User List */}
-              {usersList.map((u, i) => (
-                <Box
-                  key={i}
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    p: 1,
-                    borderBottom: "1px solid #ddd",
-                  }}
-                >
-                  <Typography>
-                    {u.username} ({u.role})
+                  <Typography variant="h5" sx={{ mt: 4 }}>
+                    Live pH Trend
                   </Typography>
 
+                  <Card sx={{ mt: 2, p: 2, borderRadius: 4 }}>
+                    <LineChart width={750} height={280} data={history}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="time" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="ph" strokeWidth={3} />
+                    </LineChart>
+                  </Card>
+                </>
+              )}
+
+              {/* DEVICES */}
+              {page === "devices" && (
+                <Card sx={{ p: 3, borderRadius: 4 }}>
+                  <Typography variant="h5">Connected Devices</Typography>
+                  <Typography sx={{ mt: 2 }}>
+                    Device-01 → Online <br />
+                    Device-02 → Offline <br />
+                    Device-03 → Maintenance Required
+                  </Typography>
+                </Card>
+              )}
+
+              {/* ANALYTICS */}
+              {page === "analytics" && (
+                <Card sx={{ p: 3, borderRadius: 4 }}>
+                  <Typography variant="h5">AI Water Risk Prediction</Typography>
+                  <Typography sx={{ mt: 2 }}>
+                    Risk Score: 12% (Low Risk) <br />
+                    Forecast: Stable water quality for next 24 hours.
+                  </Typography>
+                </Card>
+              )}
+
+              {/* SENSOR LOGS */}
+              {page === "logs" && (
+                <Card sx={{ p: 3, borderRadius: 4 }}>
+                  <Typography variant="h5">Recent Sensor Logs</Typography>
+                  {history.map((h, i) => (
+                    <Typography key={i}>
+                      {h.time} → pH: {h.ph}
+                    </Typography>
+                  ))}
+                </Card>
+              )}
+
+              {/* MAINTENANCE */}
+              {page === "maintenance" && (
+                <Card sx={{ p: 3, borderRadius: 4 }}>
+                  <Typography variant="h5">Maintenance Schedule</Typography>
+                  <Typography sx={{ mt: 2 }}>
+                    Next Calibration: 7 Days <br />
+                    Sensor Cleaning: Pending <br />
+                    Hardware Health: Good
+                  </Typography>
+                </Card>
+              )}
+
+              {/* SETTINGS */}
+              {page === "settings" && (
+                <Card sx={{ p: 3, borderRadius: 4 }}>
+                  <Typography variant="h5">System Settings</Typography>
+                  <Typography sx={{ mt: 2 }}>
+                    Configure alert thresholds and monitoring rules.
+                  </Typography>
+                </Card>
+              )}
+
+              {/* REPORTS */}
+              {page === "reports" && (
+                <Card sx={{ p: 3, borderRadius: 4 }}>
+                  <Typography variant="h5">Reports Center</Typography>
                   <Button
-                    color="error"
-                    variant="outlined"
-                    startIcon={<DeleteIcon />}
-                    onClick={() => deleteUser(u.username)}
+                    variant="contained"
+                    sx={{ mt: 2 }}
+                    href={`${API_BASE}/api/report/full`}
+                    target="_blank"
                   >
-                    Delete
+                    Download Full Report
                   </Button>
-                </Box>
-              ))}
-            </Card>
-          )}
+                </Card>
+              )}
+
+              {/* SYSTEM INFO */}
+              {page === "info" && (
+                <Card sx={{ p: 3, borderRadius: 4 }}>
+                  <Typography variant="h5">System Information</Typography>
+                  <Typography sx={{ mt: 2 }}>
+                    Platform Version: 1.0 <br />
+                    Backend: FastAPI + SQLite <br />
+                    Frontend: React + Material UI <br />
+                    Deployment Ready
+                  </Typography>
+                </Card>
+              )}
+
+              {/* ADMIN PAGE */}
+              {page === "admin" && role === "Admin" && (
+                <Card sx={{ p: 3, borderRadius: 4 }}>
+                  <Typography variant="h5">User Management</Typography>
+
+                  <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
+                    <TextField
+                      label="Username"
+                      value={newUser}
+                      onChange={(e) => setNewUser(e.target.value)}
+                    />
+                    <TextField
+                      label="Password"
+                      type="password"
+                      value={newPass}
+                      onChange={(e) => setNewPass(e.target.value)}
+                    />
+                    <Button startIcon={<AddIcon />} onClick={addUser}>
+                      Add
+                    </Button>
+                  </Box>
+
+                  {usersList.map((u, i) => (
+                    <Box
+                      key={i}
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mt: 2,
+                      }}
+                    >
+                      <Typography>{u.username}</Typography>
+                      <Button
+                        color="error"
+                        startIcon={<DeleteIcon />}
+                        onClick={() => deleteUser(u.username)}
+                      >
+                        Delete
+                      </Button>
+                    </Box>
+                  ))}
+                </Card>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </Box>
       </Box>
     </Box>
   );
 }
 
-/* =========================
-   KPI CARD COMPONENT
-========================= */
+/* Sidebar Item */
+function SidebarItem({ icon, text, onClick, active }) {
+  return (
+    <ListItem
+      button
+      onClick={onClick}
+      sx={{
+        background: active ? "#2563eb15" : "transparent",
+        borderRadius: 2,
+        m: 1,
+      }}
+    >
+      <ListItemIcon>{icon}</ListItemIcon>
+      <ListItemText primary={text} />
+    </ListItem>
+  );
+}
 
+/* KPI Card */
 function KpiCard({ title, value }) {
   return (
     <Grid item xs={12} md={3}>
       <Card sx={{ borderRadius: 4, boxShadow: 3 }}>
         <CardContent>
-          <Typography variant="subtitle2" color="text.secondary">
-            {title}
-          </Typography>
+          <Typography variant="subtitle2">{title}</Typography>
           <Typography variant="h4" fontWeight="bold">
             {value}
           </Typography>

@@ -14,7 +14,7 @@ export default function AdminPanel({ role }) {
   const [newPass, setNewPass] = useState("");
 
   function loadUsers() {
-    fetch("https://water-quality-management.onrender.com")
+    fetch("http://127.0.0.1:8000/api/users")
       .then((res) => res.json())
       .then(setUsers);
   }
@@ -24,7 +24,7 @@ export default function AdminPanel({ role }) {
   }, []);
 
   function addUser() {
-    fetch("https://water-quality-management.onrender.com/add", {
+     fetch("http://127.0.0.1:8000/api/users/add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -39,7 +39,7 @@ export default function AdminPanel({ role }) {
   }
 
   function deleteUser(username) {
-    fetch("https://water-quality-management.onrender.com/delete", {
+    fetch("http://127.0.0.1:8000/api/users/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username }),
